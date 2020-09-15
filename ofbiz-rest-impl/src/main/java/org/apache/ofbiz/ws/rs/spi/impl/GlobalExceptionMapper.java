@@ -41,9 +41,9 @@ public class GlobalExceptionMapper extends AbstractExceptionMapper implements ja
     @Override
     public Response toResponse(Throwable throwable) {
         Debug.logError(throwable.getMessage(), MODULE);
-        if (Debug.verboseOn()) {
+        //if (Debug.verboseOn()) {
             throwable.printStackTrace();
-        }
+        //}
         Response.StatusType type = getStatusType(throwable);
         Error error = new Error(type.getStatusCode(), type.getReasonPhrase(), throwable.getMessage());
         return errorResponse(type.getStatusCode(), error);

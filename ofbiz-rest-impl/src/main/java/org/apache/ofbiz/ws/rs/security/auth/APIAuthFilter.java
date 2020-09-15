@@ -73,10 +73,12 @@ public class APIAuthFilter implements ContainerRequestFilter {
         }
         String jwtToken = JWTManager.getHeaderAuthBearerToken(httpRequest);
         Map<String, Object> claims = JWTManager.validateToken(jwtToken, JWTManager.getJWTKey(delegator));
+        System.out.println("claims: "+claims);
         if (claims.containsKey(ModelService.ERROR_MESSAGE)) {
             abortWithUnauthorized(requestContext, true, "Unauthorized: " + (String) claims.get(ModelService.ERROR_MESSAGE));
         } else {
             GenericValue userLogin = extractUserLoginFromJwtClaim(delegator, claims);
+            System.out.println("userLogin "+userLogin);
             httpRequest.setAttribute("userLogin", userLogin);
         }
     }

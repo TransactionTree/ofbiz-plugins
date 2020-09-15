@@ -21,6 +21,7 @@ package org.apache.ofbiz.ws.rs.openapi;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +35,11 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.webapp.WebAppUtil;
+import org.apache.ofbiz.ws.rs.core.OFBizApiConfig;
 import org.apache.ofbiz.ws.rs.listener.ApiContextListener;
+import org.apache.ofbiz.ws.rs.model.ModelApi;
+import org.apache.ofbiz.ws.rs.model.ModelOperation;
+import org.apache.ofbiz.ws.rs.model.ModelResource;
 import org.apache.ofbiz.ws.rs.util.OpenApiUtil;
 
 import io.swagger.v3.jaxrs2.Reader;
@@ -63,6 +68,7 @@ public final class OFBizOpenApiReader extends Reader implements OpenApiReader {
     @SuppressWarnings("rawtypes")
     private Map<String, Schema> schemas;
     private OpenAPI openApi;
+    private DispatchContext context;
 
     public OFBizOpenApiReader() {
         openApiTags = new LinkedHashSet<>();
@@ -76,34 +82,77 @@ public final class OFBizOpenApiReader extends Reader implements OpenApiReader {
     @Override
     public OpenAPI read(Set<Class<?>> classes, Map<String, Object> resources) {
         openApi = super.read(classes, resources);
-        if (openApi.getTags() != null) {
-            openApiTags.addAll(openApi.getTags());
-        }
-
-        Tag serviceResourceTag = new Tag().name("Exported Services")
-                .description("OFBiz services that are exposed via REST interface with export attribute set to true");
-        openApiTags.add(serviceResourceTag);
-        openApi.setTags(new ArrayList<Tag>(openApiTags));
-        components = openApi.getComponents();
-
-        if (components == null) {
-            components = new Components();
-        }
-        schemas = components.getSchemas();
-        if (schemas == null) {
-            schemas = new HashMap<>();
-            components.schemas(schemas);
-        }
-        paths = openApi.getPaths();
-        if (paths == null) {
-            paths = new Paths();
-        }
-        addPredefinedSchemas();
         ServletContext servletContext = ApiContextListener.getApplicationCntx();
         LocalDispatcher dispatcher = WebAppUtil.getDispatcher(servletContext);
-        DispatchContext context = dispatcher.getDispatchContext();
-        Set<String> serviceNames = context.getAllServiceNames();
+        context = dispatcher.getDispatchContext();
+        configureStdOpenApiComponents();
+        addPredefinedSchemas();
+        addPublicServices();
+        addApiResources();
+        openApi.setPaths(paths);
+        openApi.setComponents(components);
+        return openApi;
+    }
 
+    private void addApiResources() {
+        Map<String, ModelApi> apis = OFBizApiConfig.getModelApis();
+        SecurityRequirement security = new SecurityRequirement();
+        security.addList("jwtToken");
+        apis.forEach((k, v) -> {
+            System.out.println("Registring Resource Definitions from API - ");
+            List<ModelResource> resources = v.getResources();
+            resources.forEach(modelResource -> {
+                Tag resourceTab = new Tag().name(modelResource.getDisplayName()).description(modelResource.getDescription());
+                openApiTags.add(resourceTab);
+                String basePath = modelResource.getPath();
+                for (ModelOperation op : modelResource.getOperations()) {
+                    String uri = basePath + op.getPath();
+                    boolean pathExists = false;
+                    PathItem pathItemObject = paths.get(uri);
+                    if(UtilValidate.isEmpty(pathItemObject)) {
+                        pathItemObject = new PathItem();
+                    } else {
+                        pathExists = true;
+                    }
+                    String serviceName = op.getService();
+                    final Operation operation = new Operation().summary(op.getDescription())
+                            .description(op.getDescription()).addTagsItem(modelResource.getDisplayName()).operationId(serviceName)
+                            .deprecated(false).addSecurityItem(security);
+
+                    String verb = op.getVerb();
+                    ModelService service = null;
+                    try {
+                        service = context.getModelService(serviceName);
+                    } catch (GenericServiceException e) {
+                        e.printStackTrace();
+                    }
+                    if (verb.equalsIgnoreCase(HttpMethod.GET)) {
+                        final QueryParameter serviceInParam = (QueryParameter) new QueryParameter().required(true)
+                                .description("Operation Input Parameters in JSON").name("input");
+                        Schema<?> refSchema = new Schema<>();
+                        refSchema.$ref(service.getName() + "Request");
+                        serviceInParam.schema(refSchema);
+                        operation.addParametersItem(serviceInParam);
+                    } else if (verb.matches(HttpMethod.POST + "|" + HttpMethod.PUT + "|" + HttpMethod.PATCH)) {
+                        RequestBody request = new RequestBody().description("Request Body for operation " + op.getDescription())
+                                .content(new Content().addMediaType(javax.ws.rs.core.MediaType.APPLICATION_JSON,
+                                        new MediaType().schema(new Schema<>().$ref(service.getName() + "Request"))));
+                        operation.setRequestBody(request);
+                    }
+                    addServiceOutSchema(service);
+                    addServiceInSchema(service);
+                    addServiceOperationApiResponses(service, operation);
+                    setPathItemOperation(pathItemObject, verb.toUpperCase(), operation);
+                    if(!pathExists) {
+                         paths.addPathItem(basePath + op.getPath(), pathItemObject);
+                    }
+                }
+            });
+        });
+
+    }
+    private void addPublicServices() {
+        Set<String> serviceNames = context.getAllServiceNames();
         for (String serviceName : serviceNames) {
             ModelService service = null;
             try {
@@ -142,10 +191,31 @@ public final class OFBizOpenApiReader extends Reader implements OpenApiReader {
 
             }
         }
+    }
 
-        openApi.setPaths(paths);
-        openApi.setComponents(components);
-        return openApi;
+    private void configureStdOpenApiComponents() {
+        if (openApi.getTags() != null) {
+            openApiTags.addAll(openApi.getTags());
+        }
+
+        Tag serviceResourceTag = new Tag().name("Exported Services")
+                .description("OFBiz services that are exposed via REST interface with export attribute set to true");
+        openApiTags.add(serviceResourceTag);
+        openApi.setTags(new ArrayList<Tag>(openApiTags));
+        components = openApi.getComponents();
+
+        if (components == null) {
+            components = new Components();
+        }
+        schemas = components.getSchemas();
+        if (schemas == null) {
+            schemas = new HashMap<>();
+            components.schemas(schemas);
+        }
+        paths = openApi.getPaths();
+        if (paths == null) {
+            paths = new Paths();
+        }
     }
 
     private void setPathItemOperation(PathItem pathItemObject, String method, Operation operation) {

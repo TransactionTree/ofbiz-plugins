@@ -55,6 +55,7 @@ public class JsonifiedParamConverterProvider implements ParamConverterProvider {
                 @SuppressWarnings("unchecked")
                 @Override
                 public T fromString(String value) {
+                    System.out.println("Value: "+value);
                     Map<String, Object> map = null;
                     try {
                         map = getMapper().readValue(value, new TypeReference<Map<String, Object>>() {

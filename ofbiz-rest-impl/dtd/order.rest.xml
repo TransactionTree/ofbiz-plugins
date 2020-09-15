@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api description="Order Related API" displayName="Order API" name="OrderAPI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="rest-api.xsd">
+  <resource description="" displayName="" enabled="true" name="Order Resource" path="/orders">
+    <operation verb="post" description="Creates an order">
+      <service name="createOrder"/>
+    </operation>
+    <operation verb="get" description="Retrieves all orders">
+      <service name="getOrders"/>
+    </operation>
+    <operation verb="get" path="/{orderId}" description="Retrieves a specfici order">
+      <service name="getOrderDetail"/>
+    </operation>
+    <operation verb="get" path="/{orderId}/shipments/{shipmentId}" description="Get Shipment Details.">
+      <service name="getOrderShipment"/>
+    </operation>
+    <operation verb="get" path="/orders/{orderId}/shipments" description="Get All Shipments Details.">
+      <service name="getOrderShipments"/>
+    </operation>
+  </resource>
+  <!--
+  <resource description="Order Item Related API" displayName="Order Item Related API" enabled="true" name="Order Item Resource" path="/orders/{orderId}">
+    <operation verb="post" description="Creates an order item" path="/items">
+      <service name="createOrderItem"/>
+    </operation>
+    <operation verb="delete" description="Deletes an order item." path="/{orderItemSeqId}">
+      <service name="deleteOrderItem"/>
+    </operation>
+  </resource>
+  -->
+</api>
