@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/services.xsd">
+    <description>Rest-impl-demo Services</description>
+    <vendor></vendor>
+    <version>1.0</version>
+
+    <service name="getAllCategoriesService" engine="java" require-new-transaction="true" max-retry="3"
+            location="org.apache.ofbiz.rest.demo.ProductAndCatalogServices" invoke="getAllCategories">
+        <description>Generates Authorization Token for the userLogin</description>
+        <attribute name="categories" type="List" mode="OUT" optional="false">
+             <attribute name="category" type="Map" mode="IN">
+                <attribute name="categoryName" type="String" mode="IN"></attribute>
+                <attribute name="categoryId" type="String" mode="IN"></attribute>
+             </attribute>
+        </attribute>
+    </service>
+
+    <service name="createProductCategoryService" engine="java" require-new-transaction="true" max-retry="3"
+            location="org.apache.ofbiz.rest.demo.ProductAndCatalogServices" invoke="createProductCategory">
+        <description>Creates a new product category</description>
+        <attribute name="category" type="org.apache.ofbiz.entity.GenericValue" mode="IN" entity-name="ProductFeature" optional="false"/>
+    </service>
+
+    <service name="getProductFeaturesService" engine="java" require-new-transaction="true" max-retry="3" auth="false"
+    export="true" action="POST" location="org.apache.ofbiz.rest.demo.ProductAndCatalogServices" invoke="getProductFeatures">
+        <description>Gets product features for a product</description>
+        <attribute name="productId" type="String" mode="IN" optional="false"/>
+        <attribute name="productFeatures" type="List" mode="OUT" optional="true"/> <!-- Note, this can't be represented in OpenAPI. No idea what runtime value will be -->
+    </service>
+
+    <service name="getProductFeatureService" engine="java" require-new-transaction="true" max-retry="3"
+            location="org.apache.ofbiz.rest.demo.ProductAndCatalogServices" invoke="getProductFeature">
+        <description>Gets a product feature</description>
+        <attribute name="productId" type="String" mode="IN" optional="false"/>
+        <attribute name="featureId" type="String" mode="IN" optional="false"/>
+        <attribute name="productFeature" type="org.apache.ofbiz.entity.GenericValue" mode="OUT" optional="true" entity-name="ProductFeatureAndAppl"/>
+    </service>
+
+    <service name="demoListMapService" engine="java" require-new-transaction="true" max-retry="3" export="true" action="POST"
+            location="org.apache.ofbiz.rest.demo.ProductAndCatalogServices" invoke="demoListMapService">
+        <description>Demo Lists and Maps</description>
+        <attribute name="accountingList" type="List" mode="IN" optional="false">
+            <attribute name="accounting" type="Map" mode="IN" optional="false">
+                <attribute name="firstName" type="String"/>
+                <attribute name="lastName" type="String"/>
+                <attribute name="age" type="Integer"/>
+            </attribute>
+        </attribute>
+        <attribute name="sales" type="List" mode="IN" optional="false"/>
+        <attribute name="output" type="String" mode="OUT" optional="true"/>
+    </service>
+
+    <service name="getCompanies" engine="groovy" export="true" action="GET"
+        location="component://rest-impl-demo/src/100/PartyServices100.groovy"
+                invoke="getCompanies">
+        <description>
+            Get companies registered within the system.
+        </description>
+        <attribute name="input" type="String" mode="IN"/>
+        <attribute name="companies" type="String" mode="OUT"/>
+    </service>
+</services>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api publish="false" description="Product Information Management API" displayName="PIM API" name="PIM" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ofbiz.apache.org/dtds/rest-api.xsd">
+
+  <resource description="APIs related to Product and related entities" displayName="Product Resource" name="Product Resource" path="/products" auth="true">
+    <!-- Operations come under their resource's path. This is accessble at /products using POST -->
+    <operation verb="post" description="Creates a product.">
+      <service name="createProduct"/>
+    </operation>
+    <!-- Operation can specify verb and path. Path is a typical REST path. Can specify path params. This operation will have path /products/{productId} -->
+    <!-- try: https://localhost:8443/rest/products/WG-9943  -->
+    <operation verb="get" path="/{productId}" description="Retries a product based on productId.">
+      <service name="getProduct"/>
+    </operation>
+    <!-- Operation can specify verb and path. Path is a typical REST path. Can specify path params. This operation will have path /products/{productId} -->
+    <!-- Try: https://localhost:8443/rest/products/WG-9943/features -->
+    <operation verb="get" path="/{productId}/features" description="Retries a product's all features based on productId.">
+      <service name="getProductFeaturesService"/>
+    </operation>
+    <!-- Try: https://localhost:8443/rest/products/WG-9943/features/9001 -->
+    <operation verb="get" path="/{productId}/features/{featureId}" description="Retries a product feature based on productId and featureId.">
+      <service name="getProductFeatureService"/>
+    </operation>
+    <operation verb="post" path="/features" description="Add a new product feature.">
+      <service name="createProductFeature"/>
+    </operation>
+    <operation verb="post" path="/{productId}/features" description="Apply feature to a product.">
+      <service name="applyFeatureToProduct"/>
+    </operation>
+
+
+  </resource>
+
+  <resource description="APIs related to Product Catalog" displayName="Product Catalog Resource" name="Product Catalog Resource" path="/categories" auth="true">
+    <!-- POST /categories -->
+
+    <!-- Try Following, obviously changing the token  -->
+    <!--curl -X POST "https://localhost:8443/rest/categories" -H "accept: application/json" -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ1c2VyTG9naW5JZCI6ImFkbWluIiwiaXNzIjoiQXBhY2hlT0ZCaXoiLCJleHAiOjE2MDA3OTExMTgsImlhdCI6MTYwMDc4OTMxOH0.kgEtgqtt_EhCAeCM86LXRLLesvUlP2Syb_cMOkupVIG7IDQ6KlvlGvYr1X4QxiXQ5o4lCgqxHA2xRjjcnpH9iQ" -H "Content-Type: application/json" -d "{\"longDescription\":\"string\",\"productCategoryTypeId\":\"CATALOG_CATEGORY\",\"productCategoryId\":\"9876\",\"linkOneImageUrl\":\"string\",\"detailScreen\":\"string\",\"primaryParentCategoryId\":\"string\",\"categoryImageUrl\":\"string\",\"description\":\"string\",\"showInSelect\":\"Y\",\"linkTwoImageUrl\":\"Y\",\"categoryName\":\"Test Category Name\"}" -->
+    <operation verb="post" description="Creates a new category.">
+      <service name="createProductCategory"/>
+    </operation>
+    <!-- GET /categories -->
+    <!-- Try: https://localhost:8443/rest/categories -->
+    <operation verb="get" description="Get list of categories">
+      <service name="getAllCategoriesService"/>
+    </operation>
+  </resource>
+</api>
